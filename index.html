@@ -23,13 +23,36 @@
 <div class="field"><label>Notes</label><textarea id="notes" maxlength="200" placeholder="Optional notes..."></textarea></div>
 <button class="btn primary" onclick="addWorkout()">+ Log Activity</button></div></div>
 <div class="card"><div class="section"><b>Recent workouts</b><button class="btn danger" onclick="clearWorkouts()">Clear all</button></div><div class="list" id="workouts"></div></div></section>
-<section id="tasks" class="page"><div class="card"><div class="section"><b>Daily tasks</b><span class="badge" id="taskBadge"></span></div><div class="form" style="margin-top:11px"><div class="field"><label>New task</label><input id="taskInput" maxlength="60" placeholder="e.g. Lock the front door"></div><button class="btn primary" onclick="addTask()">+ Add Task</button></div></div><div class="card"><div class="list" id="taskList"></div></div></section>
+<section id="tasks" class="page">
+<div class="card"><div class="section">
+  <div><b>Before You Leave 🏠</b><div class="muted" style="margin-top:3px">Quick checklist before heading out</div></div>
+  <span class="badge" id="taskBadge">0 / 0</span>
+</div><div class="progress" style="margin-top:14px"><i id="taskProgress"></i></div></div>
+<div class="card"><div class="section"><b>Leaving home checklist</b><button class="btn" onclick="resetTasks()">Reset</button></div>
+  <div class="list" id="taskList"></div>
+</div>
+<div class="card"><div class="section"><b>Add your own</b><span class="muted">Optional</span></div>
+  <div class="form" style="margin-top:10px"><div class="field"><label>Custom checklist item</label>
+    <input id="taskInput" maxlength="60" placeholder="e.g. Bring umbrella"></div>
+    <button class="btn primary" onclick="addTask()">+ Add Checklist Item</button>
+  </div>
+</div>
+</section>
 <section id="stats" class="page"><div class="card"><div class="section"><b>Last 7 days</b><span class="badge">minutes</span></div><div id="bars"></div></div><div class="grid2"><div class="stat"><small>7-day time</small><strong id="s7"></strong></div><div class="stat"><small>7-day calories</small><strong id="c7"></strong></div><div class="stat"><small>30-day workouts</small><strong id="w30"></strong></div><div class="stat"><small>30-day time</small><strong id="m30"></strong></div></div><div class="card"><b>Activity breakdown</b><div id="breakdown" class="list"></div></div></section>
 <section id="settings" class="page"><div class="card"><b>Settings</b><div class="form" style="margin-top:12px"><div class="field"><label>Weight (kg)</label><input id="weight" type="number" min="20" max="300" step=".1"></div><div class="field"><label>Weekly minutes goal</label><input id="goal" type="number" min="1" max="5000"></div><div class="field"><label>Active days goal</label><input id="daysGoal" type="number" min="1" max="7"></div><button class="btn" onclick="saveSettings()">Save settings</button></div></div><div class="card"><b>Appearance</b><div style="margin-top:12px"><button class="btn" id="themeSetting" onclick="toggleTheme()">🌙 Toggle light/dark mode</button></div></div><div class="card"><b>Data</b><div class="form" style="margin-top:12px"><button class="btn" onclick="exportData()">Export backup (.json)</button><button class="btn" onclick="document.getElementById('import').click()">Import backup</button><input hidden id="import" type="file" accept=".json,application/json"><button class="btn danger" onclick="resetApp()">Reset all data</button></div></div><div class="card"><div class="muted">Offline-first: your data stays in this browser unless you export it.</div></div></section>
 </main></div>
 <nav class="bottom"><button class="nav active" data-p="home"><span>🏠</span>Home</button><button class="nav" data-p="fitness"><span>💪</span>Fitness</button><button class="nav" data-p="tasks"><span>✅</span>Tasks</button><button class="nav" data-p="stats"><span>📊</span>Stats</button><button class="nav" data-p="settings"><span>⚙️</span>Settings</button></nav>
 <script>
-const DEF={settings:{weight:70,goal:180,days:4,theme:'dark'},acts:{Badminton:{met:7,i:'🏸'},'Gym Workout':{met:5,i:'🏋️'},HIIT:{met:8,i:'🥵'},Walking:{met:3.5,i:'🚶'},Basketball:{met:6.5,i:'🏀'},'Running / Jogging':{met:9,i:'🏃'}},workouts:[],tasks:[{id:'1',title:'Locked the front door',done:false,day:''},{id:'2',title:'Turned off the iron/appliances',done:false,day:''}]};
+const DEF={settings:{weight:70,goal:180,days:4,theme:'dark'},acts:{Badminton:{met:7,i:'🏸'},'Gym Workout':{met:5,i:'🏋️'},HIIT:{met:8,i:'🥵'},Walking:{met:3.5,i:'🚶'},Basketball:{met:6.5,i:'🏀'},'Running / Jogging':{met:9,i:'🏃'}},workouts:[],tasks:[
+{id:'t1',title:'Wallet / ID',done:false,day:'',fixed:true},
+{id:'t2',title:'Phone',done:false,day:'',fixed:true},
+{id:'t3',title:'Keys',done:false,day:'',fixed:true},
+{id:'t4',title:'Money / Cards',done:false,day:'',fixed:true},
+{id:'t5',title:'Check stove / cooking appliances',done:false,day:'',fixed:true},
+{id:'t6',title:'Turn off iron / other appliances',done:false,day:'',fixed:true},
+{id:'t7',title:'Lock doors and windows',done:false,day:'',fixed:true},
+{id:'t8',title:'Bring anything needed for today',done:false,day:'',fixed:true}
+]};
 let d=load();function load(){try{let x=JSON.parse(localStorage.getItem('routine_v2'));return x?{...DEF,...x,settings:{...DEF.settings,...x.settings},acts:{...DEF.acts,...x.acts}}:structuredClone(DEF)}catch{return structuredClone(DEF)}}function save(){localStorage.setItem('routine_v2',JSON.stringify(d))}
 function key(x=new Date()){let a=new Date(x);return a.toLocaleDateString('en-CA')}function day0(){let a=new Date();a.setHours(12,0,0,0);let n=a.getDay();a.setDate(a.getDate()-(n===0?6:n-1));return a}function dateObj(s){return new Date(s+'T12:00:00')}function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}function cal(t,m){return Math.round((d.acts[t]?.met||5)*3.5*d.settings.weight/200*m)}function wk(){let a=day0(),b=new Date(a);b.setDate(b.getDate()+7);return d.workouts.filter(w=>{let x=dateObj(w.date);return x>=a&&x<b})}function recent(n){let a=new Date();a.setHours(12,0,0,0);a.setDate(a.getDate()-n+1);return d.workouts.filter(w=>dateObj(w.date)>=a)}
 function go(p){document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));document.getElementById(p).classList.add('active');document.querySelectorAll('.nav').forEach(x=>x.classList.toggle('active',x.dataset.p===p));render()}
@@ -41,9 +64,47 @@ function home(){let t=d.workouts.filter(w=>w.date===key()),w=wk(),mins=w.reduce(
 function streak(){let n=0,a=new Date();a.setHours(12,0,0,0);if(!d.workouts.some(w=>w.date===key(a)))a.setDate(a.getDate()-1);while(d.workouts.some(w=>w.date===key(a))){n++;a.setDate(a.getDate()-1)}return n}function best(){let z=[...new Set(d.workouts.map(w=>w.date))].sort(),b=0,n=0,p=null;z.forEach(s=>{let x=dateObj(s);n=p&&(x-p)/864e5===1?n+1:1;b=Math.max(b,n);p=x});return b}
 function fill(){document.getElementById('type').innerHTML=Object.entries(d.acts).map(([n,a])=>`<option value="${esc(n)}">${a.i} ${esc(n)}</option>`).join('');document.getElementById('weightBadge').textContent=d.settings.weight+' kg'}function fitness(){fill();let q=document.getElementById('workouts');if(!d.workouts.length){q.innerHTML='<div class="empty">No workouts yet.</div>';return}q.innerHTML=d.workouts.slice(0,30).map(w=>`<div class="item"><main><strong>${d.acts[w.type]?.i||'🏋️'} ${esc(w.type)}</strong><small>${dateObj(w.date).toLocaleDateString([], {month:'short',day:'numeric',year:'numeric'})} • ${w.time||'—'} • ${w.duration} min • ${esc(w.intensity||'Moderate')}</small>${w.notes?'<small>📝 '+esc(w.notes)+'</small>':''}</main><div class="actions"><span class="badge">🔥 ${w.calories}</span><button class="mini" onclick="delWorkout('${w.id}')">✕</button></div></div>`).join('')}
 function quick(t){let now=new Date();d.workouts.unshift({id:crypto.randomUUID(),type:t,date:key(),time:now.toTimeString().slice(0,5),duration:45,intensity:'Moderate',notes:'',calories:cal(t,45)});save();render();alertToast(t+' logged — 45 min')}function addWorkout(){let t=document.getElementById('type').value,date=document.getElementById('date').value,time=document.getElementById('time').value,m=Number(document.getElementById('dur').value);if(!date||m<1||m>1440){alertToast('Enter a valid date and duration');return}d.workouts.unshift({id:crypto.randomUUID(),type:t,date,time,duration:m,intensity:document.getElementById('int').value,notes:document.getElementById('notes').value.trim(),calories:cal(t,m)});save();document.getElementById('dur').value='';document.getElementById('notes').value='';render();alertToast('Workout saved')}function delWorkout(id){d.workouts=d.workouts.filter(w=>w.id!==id);save();render();alertToast('Workout deleted')}function clearWorkouts(){if(confirm('Delete all workout history?')){d.workouts=[];save();render();alertToast('History cleared')}}
-function tasks(){let k=key();let list=document.getElementById('taskList');if(!list)return;d.tasks.forEach(t=>{if(t.day!==k)t.done=false});let n=d.tasks.filter(t=>t.done).length;document.getElementById('taskBadge').textContent=n+' / '+d.tasks.length;document.getElementById('taskList').innerHTML=d.tasks.length?d.tasks.map(t=>`<div class="item"><div class="itemmain"><strong>${esc(t.title)}</strong><small>${t.done?'Completed today':'Not completed today'}</small></div><div class="actions"><button class="check ${t.done?'on':''}" onclick="toggleTask('${t.id}')">${t.done?'✓':'○'}</button><button class="mini" onclick="delTask('${t.id}')">✕</button></div></div>`).join(''):'<div class="empty">No tasks yet.</div>';save()}function addTask(){let x=document.getElementById('taskInput'),v=x.value.trim();if(!v)return;d.tasks.push({id:crypto.randomUUID(),title:v,done:false,day:''});x.value='';save();tasks()}function toggleTask(id){let t=d.tasks.find(x=>x.id===id);t.done=!t.done;t.day=t.done?key():'';save();tasks()}function delTask(id){d.tasks=d.tasks.filter(x=>x.id!==id);save();tasks()}
+function tasks(){
+  const today=key();
+  d.tasks.forEach(t=>{if(t.day!==today)t.done=false});
+  const list=document.getElementById('taskList');
+  if(!list)return;
+  const done=d.tasks.filter(t=>t.done).length,total=d.tasks.length;
+  document.getElementById('taskBadge').textContent=done+' / '+total;
+  const bar=document.getElementById('taskProgress');
+  if(bar)bar.style.width=(total?done/total*100:0)+'%';
+  list.innerHTML=total?d.tasks.map(t=>`
+    <div class="item" style="cursor:pointer" onclick="toggleTask('${t.id}')">
+      <main><strong>${t.done?'✓ ':''}${esc(t.title)}</strong>
+      <small>${t.done?'Done':'Tap to mark complete'}</small></main>
+      <div class="actions" onclick="event.stopPropagation()">
+        <button class="check ${t.done?'on':''}" aria-label="${t.done?'Mark incomplete':'Mark complete'}" onclick="toggleTask('${t.id}')">${t.done?'✓':'○'}</button>
+        ${t.fixed?'':`<button class="mini" aria-label="Delete item" onclick="delTask('${t.id}')">✕</button>`}
+      </div>
+    </div>`).join(''):'<div class="empty">Your leaving-home checklist is empty.</div>';
+  save();
+}
+function addTask(){
+  const input=document.getElementById('taskInput'),title=input.value.trim();
+  if(!title)return;
+  d.tasks.push({id:crypto.randomUUID(),title,done:false,day:'',fixed:false});
+  input.value='';save();tasks();
+}
+function toggleTask(id){
+  const t=d.tasks.find(x=>x.id===id);if(!t)return;
+  t.done=!t.done;t.day=t.done?key():'';
+  save();tasks();
+}
+function delTask(id){
+  const t=d.tasks.find(x=>x.id===id);if(t?.fixed)return;
+  d.tasks=d.tasks.filter(x=>x.id!==id);save();tasks();
+}
+function resetTasks(){
+  d.tasks.forEach(t=>{t.done=false;t.day=''});
+  save();tasks();
+}
 function stats(){let a=recent(7),b=recent(30);document.getElementById('s7').textContent=a.reduce((x,w)=>x+w.duration,0)+' min';document.getElementById('c7').textContent=a.reduce((x,w)=>x+w.calories,0)+' kcal';document.getElementById('w30').textContent=b.length;document.getElementById('m30').textContent=b.reduce((x,w)=>x+w.duration,0)+' min';let max=1,vals=[];for(let i=6;i>=0;i--){let x=new Date();x.setHours(12,0,0,0);x.setDate(x.getDate()-i);let m=a.filter(w=>w.date===key(x)).reduce((q,w)=>q+w.duration,0);max=Math.max(max,m);vals.push([x.toLocaleDateString([], {weekday:'short'}),m])}document.getElementById('bars').innerHTML=vals.map(v=>`<div class="barrow"><span>${v[0]}</span><div class="bar"><i style="width:${v[1]/max*100}%"></i></div><b>${v[1]}m</b></div>`).join('');let c={};b.forEach(w=>c[w.type]=(c[w.type]||0)+1);document.getElementById('breakdown').innerHTML=Object.entries(c).sort((x,y)=>y[1]-x[1]).map(x=>`<div class="item"><main><strong>${d.acts[x[0]]?.i||'🏋️'} ${esc(x[0])}</strong><small>Last 30 days</small></main><span class="badge">${x[1]}</span></div>`).join('')||'<div class="empty">No activity data yet.</div>'}
 function settings(){document.getElementById('weight').value=d.settings.weight;document.getElementById('goal').value=d.settings.goal;document.getElementById('daysGoal').value=d.settings.days;document.getElementById('themeSetting').textContent=d.settings.theme==='dark'?'☀️ Switch to light mode':'🌙 Switch to dark mode'}function saveSettings(){d.settings.weight=Math.min(300,Math.max(20,Number(document.getElementById('weight').value)||70));d.settings.goal=Math.min(5000,Math.max(1,Number(document.getElementById('goal').value)||180));d.settings.days=Math.min(7,Math.max(1,Number(document.getElementById('daysGoal').value)||4));save();render();alertToast('Settings saved')}
 function exportData(){let b=new Blob([JSON.stringify(d,null,2)],{type:'application/json'}),u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download='routine-backup-'+key()+'.json';a.click();URL.revokeObjectURL(u)}document.getElementById('import').onchange=e=>{let f=e.target.files[0];if(!f)return;let r=new FileReader();r.onload=()=>{try{let x=JSON.parse(r.result);if(!x.settings||!Array.isArray(x.workouts)||!Array.isArray(x.tasks))throw 0;d={...DEF,...x};save();render();alertToast('Backup imported')}catch{alertToast('Invalid backup')}};r.readAsText(f)};function resetApp(){if(confirm('Reset ALL app data?')){localStorage.removeItem('routine_v2');d=structuredClone(DEF);save();render()}}function alertToast(s){let x=document.createElement('div');x.textContent=s;x.style='position:fixed;left:50%;bottom:85px;transform:translateX(-50%);background:var(--s3);color:var(--t);padding:10px 14px;border:1px solid var(--b);border-radius:12px;z-index:99;font-size:.78rem';document.body.appendChild(x);setTimeout(()=>x.remove(),1600)}
-document.getElementById('taskInput').onkeydown=e=>{if(e.key==='Enter')addTask()};let now=new Date();document.getElementById('date').value=key();document.getElementById('time').value=now.toTimeString().slice(0,5);render();if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+document.getElementById('taskInput').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();addTask()}};let now=new Date();document.getElementById('date').value=key();document.getElementById('time').value=now.toTimeString().slice(0,5);render();if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script></body></html>
